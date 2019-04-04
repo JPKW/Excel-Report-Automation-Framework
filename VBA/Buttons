@@ -1,0 +1,13 @@
+
+Sub Button1_Click()
+
+Call Generator.Import
+
+End Sub
+
+Sub Stage2_Button1_Click()
+
+Call Generator.Output
+
+End Sub
+
