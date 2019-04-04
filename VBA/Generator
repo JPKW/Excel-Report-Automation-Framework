@@ -1,0 +1,187 @@
+'#######################################################################################
+'################## Created by Joerg Wood (github.com/PushyFantastic) ##################
+'#######################################################################################
+
+Sub Import()
+
+Dim thisWB As Workbook
+Dim autoWS As Worksheet
+Dim impWB As Workbook
+Dim impWS As Worksheet
+Dim inpWS As Worksheet
+Dim formWS As Worksheet
+Dim copyRange As Range
+Dim pasteRange As Range
+Dim lRow1 As Long
+Dim lRow2 As Long
+Set thisWB = ThisWorkbook
+Set autoWS = thisWB.Sheets("AUTOMATION")
+
+Application.ScreenUpdating = False
+Application.Calculation = xlCalculationManual
+
+For x = 2 To 50
+
+    If Not autoWS.Cells(x, 1).Value = "i" Then GoTo skip
+    If Not autoWS.Cells(x, 2).Value = "y" Then GoTo skip
+    
+    Set inpWS = thisWB.Sheets(autoWS.Cells(x, 5).Value)
+    
+    If autoWS.Cells(x, 4).Value = "Append" Then 'set destination range
+        pasteRange = inpWS.Range("A" & LastRow(inpWS.Name, "A") + 1)
+    Else
+        pasteRange = inpWS.Range("A1")
+    End If
+    
+    Set impWB = Workbooks.Open(autoWS.Cells(x, 3).Value)
+    impWB.Activate
+    Set impWS = ActiveSheet
+        
+    If Not autoWS.Cells(x, 7).Value = 0 Then 'if has headers
+        impWS.Rows("1:" & autoWS.Cells(x, 7)).Delete 'delete the headers
+    End If
+    
+    If Not autoWS.Cells(x, 8).Value = 0 Then 'if has footers
+    'find footer range
+        lRow1 = LastRow(impWS.Name, "A")
+        impWS.Rows(autoWS.Cells(x, 8) - lRow1 + 1 & ":" & lRow1).Delete ' delete the footers
+    End If
+    
+    If autoWS.Cells(x, 4).Value = "Append" Then                                                                 'if we are appending or overwriting
+        copyRange = impWS.Range("A1:" & LastColumn(ActiveSheet.Name, "1") & LastRow(ActiveSheet.Name, "A"))     'appending
+        copyRange.Copy pasteRange
+    Else
+        copyRange = impWS.Range("A:" & LastColumn(ActiveSheet.Name, "1"))                                       'overwriting
+        copyRange.Copy pasteRange
+    End If
+
+    Application.DisplayAlerts = False
+    impWB.Close
+    Application.DisplayAlerts = True
+    
+    thisWB.Activate
+
+    If Not autoWS.Cells(x, 6).Value = "" Then 'if has related formula sheet
+    
+        If autoWS.Cells(x, 4).Value = "Append" Then 'if append
+                Set formWS = thisWB.Sheets(autoWS.Cells(x, 6).Value)
+                lRow1 = LastRow(formWS.Name, "A")
+                lRow2 = LastRow(inpWS.Name, "A")
+                formWS.Range("A" & lRow1 + 1 & ":A" & lRow2) = Format(Now(), "DD/MM/YYYY")
+        Else 'if overwrite
+                formWS.Rows("3:" & lRow1).Delete 'delete rows after row3
+                formWS.Range("A2:A" & lRow2) = Format(Now(), "DD/MM/YYYY")
+        End If
+        copyRange = formWS.Range("B2:" & LastColumn(formWS.Name, "1") & "2")
+        pasteRange = formWS.Range("B3:" & lRow2)
+        copyRange.Copy pasteRange
+    End If
+
+skip:
+
+Next x
+
+Application.ScreenUpdating = True
+Application.Calculation = xlCalculationAutomatic
+
+thisWB.Save
+
+'if stage 2 break display stage 2 sheet and exit sub
+If autoWS.Range("Break").Value = "y" Then
+    MsgBox (autoWS.Range("Stage2Prompt").Value)
+    thisWB.Sheets("Stage 2").Visible = True
+    thisWB.Sheets("InStructions").Visible = False
+    Exit Sub
+End If
+
+Call Output
+
+End Sub
+
+Sub Output()
+
+Dim thisWB As Workbook
+Dim opWB As Workbook
+Dim autoWS As Worksheet
+Dim opWS As Worksheet
+Dim valS As String
+Dim opArr() As String
+Dim coll1 As Collection
+Dim coll2 As Collection
+Dim coll3 As Collection
+Dim coll4 As Collection
+Dim coll5 As Collection
+
+
+Set thisWB = ThisWorkbook
+Set autoWS = thisWB.Sheets("AUTOMATION")
+
+
+Application.ScreenUpdating = False
+Application.Calculation = xlCalculationManual
+
+
+For x = 2 To 50
+
+    If Not autoWS.Cells(x, 1).Value = "o" Then GoTo skip
+    If Not autoWS.Cells(x, 2).Value = "y" Then GoTo skip
+    
+    Set coll1 = New Collection
+    Set coll2 = New Collection
+    Set coll3 = New Collection
+    Set coll4 = New Collection
+    Set coll5 = New Collection
+    
+    For y = 4 To 71 Step 5
+    'set colls
+        If Not autoWS.Cells(x, y).Value = "" Then
+            coll1.Add autoWS.Cells(x, y).Value
+            coll2.Add autoWS.Cells(x, y + 1).Value
+            coll3.Add autoWS.Cells(x, y + 2).Value
+            coll4.Add autoWS.Cells(x, y + 3).Value
+            coll5.Add autoWS.Cells(x, y + 4).Value
+            If y = 4 Then
+                ReDim opArr(1)
+                opArr(1) = thisWB.Sheets(autoWS.Cells(x, y).Value)
+            Else
+                ReDim Preserve opArr((y + 1) / 5)
+                opArr((y + 1) / 5) = thisWB.Sheets(autoWS.Cells(x, y).Value)
+            End If
+        End If
+    Next y
+
+
+Sheets(opArr).Copy
+Set opWB = ActiveWorkbook
+    
+    For Z = 1 To coll1.Count
+    opWB.Sheets(coll1(Z)).Activate
+        If coll2(Z) = "y" Then
+            opWB.Sheets(coll1(Z)).Cells.Select
+            Selection.Copy
+            Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+            :=False, Transpose:=False
+        End If
+        If coll3(Z) = "y" Then
+            Selection.AutoFilter
+            ActiveSheet.Range("A1:" & LastColumn(ActiveSheet.Name, "1") & LastRow(ActiveSheet.Name, "A")).AutoFilter Field:=coll4(Z), Criteria1:=coll5(Z), Operator:=xlAnd
+        End If
+        ActiveSheet.Cells(1, 1).Select
+    Next Z
+
+    With opWB           'save & close output file
+        .SaveAs Filename:=autoWS.Cells(x, 3).Value, FileFormat:=xlOpenXMLWorkbook
+        .Close savechanges:=False
+    End With
+
+skip:
+
+Next x
+
+Application.ScreenUpdating = True
+Application.Calculation = xlCalculationAutomatic
+Application.DisplayAlerts = False
+thisWB.Close 'close thiswb
+Application.DisplayAlerts = True
+
+End Sub
