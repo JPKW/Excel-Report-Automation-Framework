@@ -28,12 +28,12 @@ For x = 2 To 50
     Set inpWS = thisWB.Sheets(autoWS.Cells(x, 5).Value)
     
     If autoWS.Cells(x, 4).Value = "Append" Then 'set destination range
-        pasteRange = inpWS.Range("A" & LastRow(inpWS.Name, "A") + 1)
+        Set pasteRange = inpWS.Range("A" & LastRow(inpWS.Name, "A") + 1)
     Else
-        pasteRange = inpWS.Range("A1")
+        Set pasteRange = inpWS.Range("A1")
     End If
     
-    Set impWB = Workbooks.Open(autoWS.Cells(x, 3).Value)
+    Set impWB = Workbooks.Open(Filename:=autoWS.Cells(x, 3).Value, ReadOnly:=True)
     impWB.Activate
     Set impWS = ActiveSheet
         
@@ -48,10 +48,10 @@ For x = 2 To 50
     End If
     
     If autoWS.Cells(x, 4).Value = "Append" Then                                                                 'if we are appending or overwriting
-        copyRange = impWS.Range("A1:" & LastColumn(ActiveSheet.Name, "1") & LastRow(ActiveSheet.Name, "A"))     'appending
+        Set copyRange = impWS.Range("A1:" & LastColumn(ActiveSheet.Name, "1") & LastRow(ActiveSheet.Name, "A"))     'appending
         copyRange.Copy pasteRange
     Else
-        copyRange = impWS.Range("A:" & LastColumn(ActiveSheet.Name, "1"))                                       'overwriting
+        Set copyRange = impWS.Range("A:" & LastColumn(ActiveSheet.Name, "1"))                                       'overwriting
         copyRange.Copy pasteRange
     End If
 
@@ -72,8 +72,8 @@ For x = 2 To 50
                 formWS.Rows("3:" & lRow1).Delete 'delete rows after row3
                 formWS.Range("A2:A" & lRow2) = Format(Now(), "DD/MM/YYYY")
         End If
-        copyRange = formWS.Range("B2:" & LastColumn(formWS.Name, "1") & "2")
-        pasteRange = formWS.Range("B3:" & lRow2)
+        Set copyRange = formWS.Range("B2:" & LastColumn(formWS.Name, "1") & "2")
+        Set pasteRange = formWS.Range("B3:B" & lRow2)
         copyRange.Copy pasteRange
     End If
 
@@ -141,11 +141,11 @@ For x = 2 To 50
             coll4.Add autoWS.Cells(x, y + 3).Value
             coll5.Add autoWS.Cells(x, y + 4).Value
             If y = 4 Then
-                ReDim opArr(1)
-                opArr(1) = thisWB.Sheets(autoWS.Cells(x, y).Value)
+                ReDim opArr(0)
+                opArr(0) = autoWS.Cells(x, y).Value
             Else
-                ReDim Preserve opArr((y + 1) / 5)
-                opArr((y + 1) / 5) = thisWB.Sheets(autoWS.Cells(x, y).Value)
+                ReDim Preserve opArr((y + 1) / 5 - 1)
+                opArr((y + 1) / 5 - 1) = autoWS.Cells(x, y).Value
             End If
         End If
     Next y
