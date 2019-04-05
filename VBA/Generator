@@ -167,6 +167,8 @@ Set opWB = ActiveWorkbook
             ActiveSheet.Range("A1:" & LastColumn(ActiveSheet.Name, "1") & LastRow(ActiveSheet.Name, "A")).AutoFilter Field:=coll4(Z), Criteria1:=coll5(Z), Operator:=xlAnd
         End If
         ActiveSheet.Cells(1, 1).Select
+        If coll3(Z) = "h" Then
+            opWB.Sheets(coll1(Z)).Visible = False
     Next Z
 
     With opWB           'save & close output file
@@ -185,3 +187,4 @@ thisWB.Close 'close thiswb
 Application.DisplayAlerts = True
 
 End Sub
+
