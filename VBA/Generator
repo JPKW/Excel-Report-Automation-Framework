@@ -2,7 +2,8 @@
 '################## Created by Joerg Wood (github.com/PushyFantastic) ##################
 '#######################################################################################
 
-Sub Import()
+
+Sub Import() 'Importer
 
 Dim thisWB As Workbook
 Dim autoWS As Worksheet
@@ -26,13 +27,7 @@ For x = 2 To 50
     If Not autoWS.Cells(x, 2).Value = "y" Then GoTo skip
     
     Set inpWS = thisWB.Sheets(autoWS.Cells(x, 5).Value)
-    
-    If autoWS.Cells(x, 4).Value = "Append" Then 'set destination range
-        Set pasteRange = inpWS.Range("A" & LastRow(inpWS.Name, "A") + 1)
-    Else
-        Set pasteRange = inpWS.Range("A1")
-    End If
-    
+      
     Set impWB = Workbooks.Open(Filename:=autoWS.Cells(x, 3).Value, ReadOnly:=True)
     impWB.Activate
     Set impWS = ActiveSheet
@@ -48,10 +43,12 @@ For x = 2 To 50
     End If
     
     If autoWS.Cells(x, 4).Value = "Append" Then                                                                 'if we are appending or overwriting
-        Set copyRange = impWS.Range("A1:" & LastColumn(ActiveSheet.Name, "1") & LastRow(ActiveSheet.Name, "A"))     'appending
+        Set copyRange = impWS.Range("A1:" & LastColumn(impWS.Name, "1") & LastRow(impWS.Name, "A"))     'appending
+        Set pasteRange = inpWS.Range("A" & LastRow(inpWS.Name, "A") + 1 & ":" & LastColumn(impWS.Name, "1") & LastRow(impWS.Name, "A") + LastRow(inpWS.Name, "A") + 1)
         copyRange.Copy pasteRange
     Else
-        Set copyRange = impWS.Range("A:" & LastColumn(ActiveSheet.Name, "1"))                                       'overwriting
+        Set copyRange = impWS.Range("A:" & LastColumn(impWS.Name, "1")) 'overwriting
+        Set pasteRange = inpWS.Range("A:" & LastColumn(impWS.Name, "1"))
         copyRange.Copy pasteRange
     End If
 
@@ -63,17 +60,18 @@ For x = 2 To 50
 
     If Not autoWS.Cells(x, 6).Value = "" Then 'if has related formula sheet
     
+    Set formWS = thisWB.Sheets(autoWS.Cells(x, 6).Value)
+    lRow1 = LastRow(formWS.Name, "A")
+    lRow2 = LastRow(inpWS.Name, "A")
         If autoWS.Cells(x, 4).Value = "Append" Then 'if append
                 Set formWS = thisWB.Sheets(autoWS.Cells(x, 6).Value)
-                lRow1 = LastRow(formWS.Name, "A")
-                lRow2 = LastRow(inpWS.Name, "A")
                 formWS.Range("A" & lRow1 + 1 & ":A" & lRow2) = Format(Now(), "DD/MM/YYYY")
         Else 'if overwrite
                 formWS.Rows("3:" & lRow1).Delete 'delete rows after row3
                 formWS.Range("A2:A" & lRow2) = Format(Now(), "DD/MM/YYYY")
         End If
         Set copyRange = formWS.Range("B2:" & LastColumn(formWS.Name, "1") & "2")
-        Set pasteRange = formWS.Range("B3:B" & lRow2)
+        Set pasteRange = formWS.Range("B3:" & LastColumn(formWS.Name, "1") & lRow2)
         copyRange.Copy pasteRange
     End If
 
@@ -86,19 +84,10 @@ Application.Calculation = xlCalculationAutomatic
 
 thisWB.Save
 
-'if stage 2 break display stage 2 sheet and exit sub
-If autoWS.Range("Break").Value = "y" Then
-    MsgBox (autoWS.Range("Stage2Prompt").Value)
-    thisWB.Sheets("Stage 2").Visible = True
-    thisWB.Sheets("InStructions").Visible = False
-    Exit Sub
-End If
-
-Call Output
-
 End Sub
 
-Sub Output()
+
+Sub Output() 'Exporter
 
 Dim thisWB As Workbook
 Dim opWB As Workbook
@@ -116,10 +105,8 @@ Dim coll5 As Collection
 Set thisWB = ThisWorkbook
 Set autoWS = thisWB.Sheets("AUTOMATION")
 
-
 Application.ScreenUpdating = False
 Application.Calculation = xlCalculationManual
-
 
 For x = 2 To 50
 
@@ -150,10 +137,9 @@ For x = 2 To 50
         End If
     Next y
 
-
 Sheets(opArr).Copy
 Set opWB = ActiveWorkbook
-    
+
     For Z = 1 To coll1.Count
     opWB.Sheets(coll1(Z)).Activate
         If coll2(Z) = "y" Then
@@ -169,10 +155,11 @@ Set opWB = ActiveWorkbook
         ActiveSheet.Cells(1, 1).Select
         If coll3(Z) = "h" Then
             opWB.Sheets(coll1(Z)).Visible = False
+        End If
     Next Z
 
     With opWB           'save & close output file
-        .SaveAs Filename:=autoWS.Cells(x, 3).Value, FileFormat:=xlOpenXMLWorkbook
+        .SaveAs Filename:=InjectDate(autoWS.Cells(x, 3).Value), FileFormat:=xlOpenXMLWorkbook
         .Close savechanges:=False
     End With
 
@@ -187,4 +174,5 @@ thisWB.Close 'close thiswb
 Application.DisplayAlerts = True
 
 End Sub
+
 
