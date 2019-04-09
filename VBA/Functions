@@ -24,7 +24,7 @@ LastRow = ws.Cells(Rows.Count, col).End(xlUp).row
 End Function
 
 '############################################################################################################################
-'for caluclating work hours duration between two DateTimes
+'for caluclating work hours duration between two DateTimes (result is hrs in decimal format)
 Function WorkHours(StartDateTime, EndDateTime, Bus_Hrs_Start As Date, Bus_Hrs_End As Date, Holidays)
 Dim d1 As Date, d2 As Date, wf As WorksheetFunction
 Dim t1 As Date, t2 As Date
