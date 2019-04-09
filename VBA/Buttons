@@ -1,7 +1,27 @@
+'#######################################################################################
+'################## Created by Joerg Wood (github.com/PushyFantastic) ##################
+'#######################################################################################
+
 
 Sub Button1_Click()
 
+Dim thisWB As Workbook
+Dim autoWS As Worksheet
+
+Set thisWB = ThisWorkbook
+Set autoWS = thisWB.Sheets("AUTOMATION")
+
 Call Generator.Import
+
+'if stage 2 break display stage 2 sheet and exit sub
+If autoWS.Range("Break").Value = "y" Then
+    MsgBox (autoWS.Range("Stage2Prompt").Value)
+    thisWB.Sheets("Stage 2").Visible = True
+    thisWB.Sheets("InStructions").Visible = False
+    Exit Sub
+End If
+
+Call Output
 
 End Sub
 
@@ -10,4 +30,5 @@ Sub Stage2_Button1_Click()
 Call Generator.Output
 
 End Sub
+
 
