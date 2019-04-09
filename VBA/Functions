@@ -1,34 +1,31 @@
-'############################################################################################################################
+'#######################################################################################
+'################## Created by Joerg Wood (github.com/PushyFantastic) ##################
+'#######################################################################################
 
-'gives last column inr ange, requires continuous data from column A across selected row
-Function LastColumn(wsheet As String, row As String) As String 
+'############################################################################################################################
+'gives last column in specified row
+Function LastColumn(wsheet As String, row As String) As String
 
 Dim ws As Worksheet
-Set ws = ThisWorkbook.Sheets(wsheet)
+Set ws = ActiveWorkbook.Sheets(wsheet)
 
-LastColumn = Split(Columns(ws.Range("A" & row).End(xlToRight).Column).Address(, False), ":")(1)
+LastColumn = Split(Columns(ws.Cells(row, Columns.Count).End(xlToLeft).Column).Address(, False), ":")(1)
 
 End Function
 
 '############################################################################################################################
-
-'gives last row in column
-Function LastRow(wsheet As String, col As String) As Long 
+'gives last row in specified column
+Function LastRow(wsheet As String, col As String) As Long
 Dim ws As Worksheet
-Set ws = ThisWorkbook.Sheets(wsheet)
+Set ws = ActiveWorkbook.Sheets(wsheet)
 
-    With ws
-        LastRow = .Cells(.Rows.Count, col).End(xlUp).Row
-    End With
+LastRow = ws.Cells(Rows.Count, col).End(xlUp).row
 
 End Function
 
-
 '############################################################################################################################
-
 'for caluclating work hours duration between two DateTimes
 Function WorkHours(StartDateTime, EndDateTime, Bus_Hrs_Start As Date, Bus_Hrs_End As Date, Holidays)
-
 Dim d1 As Date, d2 As Date, wf As WorksheetFunction
 Dim t1 As Date, t2 As Date
 Dim HrsElapsed As Double
@@ -73,16 +70,15 @@ WorkHours = HrsElapsed
 
 End Function
 
-Function TimeDiff(StartTime As Date, EndTime As Date)
+Function TimeDiff(StartTime As Date, EndTime As Date) 'this function is used in the above function
 
     TimeDiff = Abs(EndTime - StartTime) * 24
     
 End Function
 
 '############################################################################################################################
-
 'this is useful for summing the absolute values of a range (eg for weighted scoring)
-Function SumAbs(Rng As Range) As Long 
+Function SumAbs(Rng As Range) As Long
 
 result = 0
 
@@ -93,5 +89,26 @@ result = 0
     On Error GoTo 0
 
 SumAbs = result
+
+End Function
+
+'############################################################################################################################
+'This function will insert the date as "YYYYMMDD - " into the file name of a file path
+
+Function InjectDate(FilePath As String) As String
+
+Dim FPArray() As String
+
+FPArray = Split(FilePath, "\")
+
+For x = 0 To UBound(FPArray)
+
+    If x = UBound(FPArray) Then
+        InjectDate = InjectDate + Format(Now(), "YYYYMMDD") + " - " + FPArray(x)
+    Else
+        InjectDate = InjectDate + FPArray(x) + "\"
+    End If
+
+Next x
 
 End Function
