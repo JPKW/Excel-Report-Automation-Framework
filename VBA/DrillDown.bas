@@ -1,4 +1,5 @@
 Attribute VB_Name = "DrillDown"
+
 Dim Operation As String
 Dim OpCol As String
 Dim OpFig As Double
@@ -31,7 +32,7 @@ For Each x In txtArr
     i = i + 1
 Next x
 
-If i = 1 Then
+If i = 1 And Left(txtArr(0), 8) <> "=IFERROR" Then
     DetermineCalcComponent = Mid(txtArr(0), 2, Len(txtArr(0)) - 1)
 End If
 
@@ -88,17 +89,8 @@ Dim Arr() As String
 
 Arr = filterArr(DetermineCalcComponent(txt, ws), ws)
 
-If UBound(Arr) - ConcCounter = 2 Then
-    Call applyFilter1(Arr(0), Arr(1), Arr(2))
-End If
+Call applyFilter(Arr())
 
-If UBound(Arr) - ConcCounter = 4 Then
-    Call applyFilter2(Arr(0), Arr(1), Arr(2), Arr(3), Arr(4))
-End If
-
-If UBound(Arr) - ConcCounter = 6 Then
-    Call applyFilter3(Arr(0), Arr(1), Arr(2), Arr(3), Arr(4), Arr(5), Arr(6))
-End If
 
 Application.ScreenUpdating = True
 Application.Calculation = xlCalculationAutomatic
@@ -120,6 +112,7 @@ Dim calc As String
 Dim conc As Boolean
 
 txtArr = Split(txt, ",")
+Dim newArr() As String
 
 
 If Operation = "COUNTIFS" Then
@@ -143,6 +136,8 @@ i = 0
     tmp = Mid(txtArr(i), st, fn - st)
     st = InStr(txtArr(i), "(") + 1
     fn = InStr(Mid(txtArr(i), st), "!") + st - 1
+                                ReDim Preserve newArr(0)
+                                newArr(0) = Replace(Mid(txtArr(i), st, fn - st), "'", "")
     txtArr(i) = Replace(Mid(txtArr(i), st, fn - st), "'", "")
     ReDim Preserve txtArr(UBound(txtArr))
     txtArr(i + 1) = tmp
@@ -159,6 +154,8 @@ For x = 1 To UBound(txtArr) - ConcCounter
         'get filter col as number (string format)
         st = InStr(txtArr(i), ":") + 1
         fn = Len(txtArr(i)) + 1
+                                ReDim Preserve newArr(UBound(newArr) + 1)
+                                newArr(UBound(newArr)) = wColNum(txtArr(0), Mid(txtArr(i), st, fn - st))
         txtArr(i - ConcCounter) = wColNum(txtArr(0), Mid(txtArr(i), st, fn - st))
     Else
         'get filter val as string
@@ -170,15 +167,23 @@ For x = 1 To UBound(txtArr) - ConcCounter
             If IsError(Evaluate(txtArr(i))) Then
                 If IsError(Evaluate(txtArr(i) & ")")) Then
                     If IsError(Evaluate(Left(txtArr(i), Len(txtArr(i)) - 1))) Then
+                                ReDim Preserve newArr(UBound(newArr) + 1)
+                                newArr(UBound(newArr)) = Evaluate(Left(txtArr(i), Len(txtArr(i)) - 2))
                         txtArr(i - ConcCounter) = Evaluate(Left(txtArr(i), Len(txtArr(i)) - 2))
                     Else
                         txtArr(i - ConcCounter) = (Evaluate(Left(txtArr(i), Len(txtArr(i)) - 1)))
+                                ReDim Preserve newArr(UBound(newArr) + 1)
+                                newArr(UBound(newArr)) = (Evaluate(Left(txtArr(i), Len(txtArr(i)) - 1)))
                     End If
                 Else
+                                ReDim Preserve newArr(UBound(newArr) + 1)
+                                newArr(UBound(newArr)) = Evaluate(txtArr(i) & ")")
                     txtArr(i - ConcCounter) = Evaluate(txtArr(i) & ")")
                 End If
             Else
                 On Error GoTo IsText
+                                ReDim Preserve newArr(UBound(newArr) + 1)
+                                newArr(UBound(newArr)) = Evaluate(txtArr(i))
                 txtArr(i - ConcCounter) = Evaluate(txtArr(i))
             End If
         On Error GoTo 0
@@ -186,23 +191,25 @@ For x = 1 To UBound(txtArr) - ConcCounter
 IsText:
         st = InStr(txtArr(i), """") + 1
         fn = InStr(Mid(txtArr(i), st + 2), """") + st + 1
+                                ReDim Preserve newArr(UBound(newArr) + 1)
+                                newArr(UBound(newArr)) = Mid(txtArr(i), st, fn - st)
         txtArr(i - ConcCounter) = Mid(txtArr(i), st, fn - st)
         On Error GoTo 0
 Continue:
     End If
-If conc = True Then
-    x = x + 1
-    i = i + 2
-    conc = False
-    ConcCounter = ConcCounter + 1
-Else
-    i = i + 1
-End If
+    
+    If conc = True Then
+        x = x + 1
+        i = i + 2
+        conc = False
+        ConcCounter = ConcCounter + 1
+    Else
+        i = i + 1
+    End If
+
 Next x
 
-filterArr = txtArr
-
-Exit Function
+filterArr = newArr
 
 End Function
 
@@ -220,31 +227,13 @@ For Each col In ws.Range("A:A").Columns
     End If
 Next col
     
-    
 End Function
 
-Sub applyFilter1(sh As String, col As String, crit As String)
+Sub applyFilter(filterArr() As String)
 
 Dim ws As Worksheet
 
-Set ws = ActiveWorkbook.Sheets(sh)
-
-On Error Resume Next
-ws.ShowAllData
-On Error GoTo 0
-
-ws.Range("A1:" & LastColumn(sh, "1") & LastRow(sh, "A")).AutoFilter Field:=col, Criteria1:=crit, Operator:=xlAnd
-
-ws.Activate
-
-End Sub
-
-Sub applyFilter2(sh As String, col As String, crit As String, col2 As String, crit2 As String)
-
-Dim ws As Worksheet
-
-Set ws = ActiveWorkbook.Sheets(sh)
-
+Set ws = ActiveWorkbook.Sheets(filterArr(0))
 
 Dim r As Long
 If ws.Range("A1").Value = "" Then
@@ -257,73 +246,25 @@ Else
     r = 1
 End If
 
-
 On Error Resume Next
 ws.ShowAllData
 On Error GoTo 0
 
-
-
-If col = col2 Then
-    With ws.Range("A" & r & ":" & LastColumn(sh, CStr(r)) & LastRow(sh, "A"))
-        .AutoFilter Field:=col, Criteria1:=crit, Operator:=xlAnd, Criteria2:=crit2
-    End With
-Else
-    With ws.Range("A" & r & ":" & LastColumn(sh, CStr(r)) & LastRow(sh, "A"))
-        .AutoFilter Field:=col, Criteria1:=crit
-        .AutoFilter Field:=col2, Criteria1:=crit2
-    End With
-End If
-
-
-ws.Activate
-
-End Sub
-
-Sub applyFilter3(sh As String, col As String, crit As String, col2 As String, crit2 As String, col3 As String, crit3 As String)
-
-Dim ws As Worksheet
-
-Set ws = ActiveWorkbook.Sheets(sh)
-
-Dim r As Long
-If ws.Range("A1").Value = "" Then
-    If ws.Range("A2").Value = "" Then
-        r = 3
-    Else
-        r = 2
-    End If
-Else
-    r = 1
-End If
-
-
-On Error Resume Next
-ws.ShowAllData
-On Error GoTo 0
-
-If col = col2 Then  'if col & col2 are the same column
-    With ws.Range("A" & r & ":" & LastColumn(sh, "1") & LastRow(sh, "A"))
-        .AutoFilter Field:=col, Criteria1:=crit, Operator:=xlAnd, Criteria2:=crit2 'col & col2 filter line
-        .AutoFilter Field:=col3, Criteria1:=crit3 'col3 filter line
-    End With
-Else
-    If col2 = col3 Then 'if col2 & col3 are the same column
-        With ws.Range("A" & r & ":" & LastColumn(sh, "1") & LastRow(sh, "A"))
-            .AutoFilter Field:=col2, Criteria1:=crit2, Operator:=xlAnd, Criteria2:=crit3 'col2 & col3 filter line
-            .AutoFilter Field:=col, Criteria1:=crit 'col filter line
-        End With
-    Else
-        With ws.Range("A" & r & ":" & LastColumn(sh, "1") & LastRow(sh, "A")) 'if all cols are different
-            .AutoFilter Field:=col, Criteria1:=crit 'col filter line
-            .AutoFilter Field:=col2, Criteria1:=crit2 'col2 filter line
-            .AutoFilter Field:=col3, Criteria1:=crit3 'col3 filter ilne
-        End With
-    End If
-End If
-
+With ws.Range("A" & r & ":" & LastColumn(ws.Name, CStr(r)) & LastRow(ws.Name, "A"))
+    For x = 1 To UBound(filterArr) - 1 Step 2
+        If x = UBound(filterArr) - 1 Then 'if it's the last one
+                    .AutoFilter Field:=filterArr(x), Criteria1:=filterArr(x + 1)
+        Else
+            If filterArr(x) = filterArr(x + 2) Then
+                        .AutoFilter Field:=filterArr(x), Criteria1:=filterArr(x + 1), Operator:=xlAnd, Criteria2:=filterArr(x + 3) 'col & col2 filter line
+                x = x + 2
+            Else
+                    .AutoFilter Field:=filterArr(x), Criteria1:=filterArr(x + 1)
+            End If
+        End If
+    Next x
+End With
 
 ws.Activate
 
 End Sub
-
