@@ -1,4 +1,3 @@
-Attribute VB_Name = "DrillDown"
 
 Dim Operation As String
 Dim OpCol As String
@@ -38,14 +37,20 @@ End If
 
 For x = 1 To 20
     If Right(DetermineCalcComponent, 1) = ")" Or Right(DetermineCalcComponent, 1) = "," Then
-        DetermineCalcComponent = Left(DetermineCalcComponent, Len(DetermineCalcComponent) - 1)
+        DetermineCalcComponent = Left(DetermineCalcComponent, Len(DetermineCalcComponent))
     Else
         Exit For
     End If
 Next x
 
-DetermineCalcComponent = DetermineCalcComponent
-    
+If DetermineCalcComponent = "" Then
+    If Left(txtArr(0), 8) = "=IFERROR" Then
+        DetermineCalcComponent = Mid(txtArr(1), 1, Len(txtArr(1)) - 1)
+    End If
+End If
+
+  
+  
 Operation = Left(DetermineCalcComponent, InStr(DetermineCalcComponent, "(") - 1)
 
 
@@ -145,11 +150,13 @@ i = 0
 i = 1
 
 conc = False
-
-Dim counter As Long
+Dim counter As Integer
+Dim concZ As Integer
 ConcCounter = 0
 
+
 For x = 1 To UBound(txtArr) - ConcCounter
+concZ = 0
     If (concperm = False And i Mod 2 = 1) Or InStr(txtArr(i), txtArr(0)) Then
         'get filter col as number (string format)
         st = InStr(txtArr(i), ":") + 1
@@ -163,17 +170,23 @@ For x = 1 To UBound(txtArr) - ConcCounter
             txtArr(i - ConcCounter) = txtArr(i) & "," & txtArr(i + 1)
             conc = True
             concperm = True
+                If InStr(txtArr(i), ")") = 0 Then
+                    txtArr(i) = txtArr(i - ConcCounter) & "," & txtArr(i + 2)
+                    conc = True
+                    concperm = True
+                    concZ = 1
+                End If
         End If
             If IsError(Evaluate(txtArr(i))) Then
                 If IsError(Evaluate(txtArr(i) & ")")) Then
                     If IsError(Evaluate(Left(txtArr(i), Len(txtArr(i)) - 1))) Then
                                 ReDim Preserve newArr(UBound(newArr) + 1)
                                 newArr(UBound(newArr)) = Evaluate(Left(txtArr(i), Len(txtArr(i)) - 2))
-                        txtArr(i - ConcCounter) = Evaluate(Left(txtArr(i), Len(txtArr(i)) - 2))
+                                txtArr(i - ConcCounter) = Evaluate(Left(txtArr(i), Len(txtArr(i)) - 2))
                     Else
-                        txtArr(i - ConcCounter) = (Evaluate(Left(txtArr(i), Len(txtArr(i)) - 1)))
                                 ReDim Preserve newArr(UBound(newArr) + 1)
                                 newArr(UBound(newArr)) = (Evaluate(Left(txtArr(i), Len(txtArr(i)) - 1)))
+                        txtArr(i - ConcCounter) = (Evaluate(Left(txtArr(i), Len(txtArr(i)) - 1)))
                     End If
                 Else
                                 ReDim Preserve newArr(UBound(newArr) + 1)
@@ -194,15 +207,15 @@ IsText:
                                 ReDim Preserve newArr(UBound(newArr) + 1)
                                 newArr(UBound(newArr)) = Mid(txtArr(i), st, fn - st)
         txtArr(i - ConcCounter) = Mid(txtArr(i), st, fn - st)
-        On Error GoTo 0
 Continue:
+On Error GoTo 0
     End If
     
     If conc = True Then
-        x = x + 1
-        i = i + 2
+        x = x + 1 + concZ
+        i = i + 2 + concZ
         conc = False
-        ConcCounter = ConcCounter + 1
+        ConcCounter = ConcCounter + 1 + concZ
     Else
         i = i + 1
     End If
@@ -268,3 +281,4 @@ End With
 ws.Activate
 
 End Sub
+
