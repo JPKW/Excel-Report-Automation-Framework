@@ -53,14 +53,14 @@ Error_Handler_Exit:
     Exit Sub
 
 Error_Handler:
-    MsgBox "The following error has occured" & vbCrLf & vbCrLf & _
+	MsgBox "The following error has occured" & vbCrLf & vbCrLf & _
            "Error Number: " & Err.Number & vbCrLf & _
            "Error Source: cmd_AddRec_Click" & vbCrLf & _
            "Error Description: " & Err.Description & _
            Switch(Erl = 0, "", Erl <> 0, vbCrLf & "Line No: " & Erl) _
            , vbOKOnly + vbCritical, "An Error has Occured!"
     Resume Error_Handler_Exit
-    
+	
 End Sub
 
 '-------------------------------------------------------------------------------------------------------
@@ -83,8 +83,6 @@ For i = 0 To objRecordset.Fields.Count - 1
     If FieldName = objRecordset.Fields.Item(i).Name Then Exit For
 Next i
 
-
-
 'find the target record
 While objRecordset.EOF = False
 'check for match
@@ -97,6 +95,4 @@ End If
 objRecordset.MoveNext
 Wend
 
-
 End Function
-
