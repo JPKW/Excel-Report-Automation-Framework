@@ -1,8 +1,18 @@
 Attribute VB_Name = "Functions"
 
+
+
 '#######################################################################################
 '################## Created by Joerg Wood (github.com/PushyFantastic) ##################
 '#######################################################################################
+
+Function LastRow(wsheet As String, col As String) As Long
+Dim ws As Worksheet
+Set ws = ActiveWorkbook.Sheets(wsheet)
+
+LastRow = ws.Cells(Rows.Count, col).End(xlUp).row
+
+End Function
 
 '############################################################################################################################
 'gives last column in specified row
@@ -15,15 +25,6 @@ LastColumn = Split(Columns(ws.Cells(row, Columns.Count).End(xlToLeft).Column).Ad
 
 End Function
 
-'############################################################################################################################
-'gives last row in specified column
-Function LastRow(wsheet As String, col As String) As Long
-Dim ws As Worksheet
-Set ws = ActiveWorkbook.Sheets(wsheet)
-
-LastRow = ws.Cells(Rows.Count, col).End(xlUp).row
-
-End Function
 
 '############################################################################################################################
 'for caluclating work hours duration between two DateTimes
@@ -115,38 +116,44 @@ Next x
 
 End Function
 
+Sub EmailWorkbook(attachmentPath As String, EmailSubject As String, EmailTo As String, Optional attachmentPath2 As String = "")
 
-'############################################################################################################################
-'############################################################################################################################
-'############################################################################################################################
+Dim OutlookApp As Object
+Dim OutlookMessage As Object
 
-Sub ListBoxUpdate()
+Set SourceWB = ActiveWorkbook
 
-Dim fl As Range
+  On Error Resume Next
+    Set OutlookApp = GetObject(class:="Outlook.Application") 'Handles if Outlook is already open
+  Err.Clear
+    If OutlookApp Is Nothing Then Set OutlookApp = CreateObject(class:="Outlook.Application") 'If not, open Outlook
+    
+    If Err.Number = 429 Then
+      MsgBox "Outlook could not be found, aborting.", 16, "Outlook Not Found"
+      Exit Sub
+    End If
+  On Error GoTo 0
 
-If ActiveSheet.Shapes(Application.Caller).ControlFormat.ListFillRange = "AdjusterList" Then
-    Set fl = ActiveWorkbook.Sheets("Validation").Range("FilterList")
-Else
-    Set fl = ActiveWorkbook.Sheets("Validation").Range("FilterList2")
-End If
+'Create new email message
+  Set OutlookMessage = OutlookApp.CreateItem(0)
 
-
-
-Dim flVal As String
-
-flVal = ""
-
-    Dim i As Long
-    With ActiveSheet.Shapes(ActiveSheet.Shapes(Application.Caller).Name).OLEFormat.Object
-        For i = 1 To .ListCount
-            If .Selected(i) Then
-                flVal = .List(i) & "|" & flVal 'item i selected
-            End If
-        Next i
+'Create Outlook email with attachment
+  On Error Resume Next
+    With OutlookMessage
+     .To = EmailTo
+     .CC = ""
+     .BCC = ""
+     .Subject = EmailSubject
+     .Body = ""
+     .Attachments.Add attachmentPath
+     If Not attachmentPath2 = "" Then .Attachments.Add attachmentPath2
+     .Send
     End With
-
-fl = flVal
-
+  On Error GoTo 0
+ 
 
 End Sub
+
+
+
 
