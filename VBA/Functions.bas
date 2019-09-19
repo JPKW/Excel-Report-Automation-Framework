@@ -1,7 +1,5 @@
 Attribute VB_Name = "Functions"
 
-
-
 '#######################################################################################
 '################## Created by Joerg Wood (github.com/PushyFantastic) ##################
 '#######################################################################################
@@ -116,6 +114,44 @@ Next x
 
 End Function
 
+'############################################################################################################################
+'############################################################################################################################
+'############################################################################################################################
+
+Sub ListBoxUpdate()
+
+Dim fl As Range
+
+If ActiveSheet.Shapes(Application.Caller).ControlFormat.ListFillRange = "AdjusterList" Then
+    Set fl = ActiveWorkbook.Sheets("Validation").Range("FilterList")
+Else
+    Set fl = ActiveWorkbook.Sheets("Validation").Range("FilterList2")
+End If
+
+
+
+Dim flVal As String
+
+flVal = ""
+
+    Dim i As Long
+    With ActiveSheet.Shapes(ActiveSheet.Shapes(Application.Caller).Name).OLEFormat.Object
+        For i = 1 To .ListCount
+            If .Selected(i) Then
+                flVal = .List(i) & "|" & flVal 'item i selected
+            End If
+        Next i
+    End With
+
+fl = flVal
+
+
+End Sub
+
+
+
+
+
 Sub EmailWorkbook(attachmentPath As String, EmailSubject As String, EmailTo As String, Optional attachmentPath2 As String = "")
 
 Dim OutlookApp As Object
@@ -153,6 +189,11 @@ Set SourceWB = ActiveWorkbook
  
 
 End Sub
+
+
+
+
+
 
 
 
