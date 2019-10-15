@@ -98,6 +98,7 @@ End Function
 Function InjectDate(FilePath As String) As String
 
 Dim FPArray() As String
+Dim x as integer
 
 FPArray = Split(FilePath, "\")
 
@@ -155,6 +156,7 @@ Sub EmailWorkbook(attachmentPath As String, EmailSubject As String, EmailTo As S
 
 Dim OutlookApp As Object
 Dim OutlookMessage As Object
+Dim SourceWB as Workbook
 
 Set SourceWB = ActiveWorkbook
 
