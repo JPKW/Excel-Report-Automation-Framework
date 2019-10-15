@@ -1,6 +1,7 @@
 '#######################################################################################
 '################## Created by Joerg Wood (github.com/PushyFantastic) ##################
 '#######################################################################################
+Option Explicit
 
 Function LastRow(wsheet As String, col As String) As Long
 Dim ws As Worksheet
@@ -187,12 +188,3 @@ Set SourceWB = ActiveWorkbook
  
 
 End Sub
-
-
-
-
-
-
-
-
-
