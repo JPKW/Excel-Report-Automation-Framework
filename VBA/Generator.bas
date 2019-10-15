@@ -49,6 +49,7 @@ Dim inpWS As Worksheet
 Dim formWS As Worksheet
 Dim copyRange As Range
 Dim pasteRange As Range
+Dim x, y as Integer
 Dim lRow1 As Long
 Dim lRow2 As Long
 Set thisWB = ThisWorkbook
@@ -146,7 +147,9 @@ Dim coll2 As Collection
 Dim coll3 As Collection
 Dim coll4 As Collection
 Dim coll5 As Collection
-
+Dim x, y, z as Integer
+Dim lRow1 As Long
+Dim lRow2 As Long
 
 Application.ScreenUpdating = False
 Application.Calculation = xlCalculationManual
