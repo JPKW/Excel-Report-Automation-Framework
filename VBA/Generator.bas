@@ -1,7 +1,43 @@
-Attribute VB_Name = "Generator"
 '#######################################################################################
 '################## Created by Joerg Wood (github.com/PushyFantastic) ##################
 '#######################################################################################
+Option Explicit
+
+Sub Generate()
+
+Dim thisWB As Workbook
+Dim autoWS As Worksheet
+Dim today As String
+today = Format(Now(), "DDDD")
+
+
+Set thisWB = ThisWorkbook
+Set autoWS = thisWB.Sheets("AUTOMATION")
+
+Call Generator.Import
+
+Call Generator.Output
+
+Call Generator.Generate_TrendBoard
+
+
+Dim HuddleName As String
+HuddleName = InjectDate(autoWS.Cells(26, 3).Value) 'set filename huddle board !!STATIC RANGE!!
+
+Dim TrendName As String
+TrendName = Replace(thisWB.FullName, "Generator - Allianz Huddle Board.xlsm", Format(Now(), "YYYYMMDD") & " - Allianz Trend Board.xlsx") 'set filename trend board !!HARD NAME!!
+
+
+If Not today = "Friday" Then
+    Call EmailWorkbook(HuddleName, "Allianz Huddle Board", autoWS.Range("DistributionList").Value) 'if it's not friday, send just huddle
+Else
+    Call EmailWorkbook(HuddleName, "Allianz Huddle Board", autoWS.Range("DistributionList").Value, TrendName) 'if it's friday, send huddle + trend
+End If
+
+
+End Sub
+
+
 
 Sub Import() 'Importer
 
@@ -112,13 +148,14 @@ Dim coll4 As Collection
 Dim coll5 As Collection
 
 
+Application.ScreenUpdating = False
+Application.Calculation = xlCalculationManual
+
 Set thisWB = ThisWorkbook
 Set autoWS = thisWB.Sheets("AUTOMATION")
 
 Call SelectAllFilter
 
-Application.ScreenUpdating = False
-Application.Calculation = xlCalculationManual
 
 For x = 2 To 50
 
@@ -152,7 +189,7 @@ For x = 2 To 50
 Sheets(opArr).Copy
 Set opWB = ActiveWorkbook
 
-If InStr(1, autoWS.Cells(x, 3).Value, ".xlsm") > 0 Then 'if filename contains .xlsm then import vb & assign buttons (=0 means not found)
+If InStr(1, autoWS.Cells(x, 3).Value, ".xlsm") > 0 Or InStr(1, autoWS.Cells(x, 3).Value, ".xlsb") > 0 Then 'if filename contains .xlsm or .xlsb then import vb & assign buttons (=0 means not found)
     ImportVB.AddBas
     ImportVB.AssignButtons
 End If
@@ -176,15 +213,18 @@ End If
         End If
     Next Z
 
-
 Dim FName As String
 FName = InjectDate(autoWS.Cells(x, 3).Value) 'set filename
 
           'save & close output file
-If InStr(1, FName, ".xlsm") = 0 Then 'if the filename does not contain ".xlsm" (=0 means not found)
-    opWB.SaveAs Filename:=FName, FileFormat:=xlOpenXMLWorkbook 'save as .xlsx
-Else
+If Not InStr(1, FName, ".xlsm") = 0 Then 'if the filename contains ".xlsm" (NOT =0 means found)
     opWB.SaveAs Filename:=FName, FileFormat:=xlOpenXMLWorkbookMacroEnabled 'save as .xlsm
+Else
+    If Not InStr(1, FName, ".xlsb") = 0 Then 'if the filename contains ".xlsb" (NOT =0 means found)
+        opWB.SaveAs Filename:=FName, FileFormat:=xlExcel12 'save as .xlsb
+    Else
+        opWB.SaveAs Filename:=FName, FileFormat:=xlOpenXMLWorkbook 'save as .xlsx
+    End If
 End If
 
 Application.DisplayAlerts = False
@@ -195,16 +235,10 @@ skip:
 
 Next x
 
+thisWB.Activate
+
 Application.ScreenUpdating = True
 Application.Calculation = xlCalculationAutomatic
-
-Call Reset.Reset
-
-autoWS.Activate
-autoWS.Range("DistributionList").Copy
-
-MsgBox ("All done!" & vbNewLine & vbNewLine & "Distribution list has been copied to clipboard.")
-
 
 End Sub
 
@@ -230,5 +264,79 @@ Set ws = ActiveWorkbook.Sheets("Dashboard")
         End If
 skip:
     Next b
+
+End Sub
+
+
+Sub Generate_TrendBoard()
+
+Dim today As String
+
+today = Format(Now(), "DDDD")
+
+If Not today = "Friday" Then
+    Exit Sub
+End If
+
+Dim wb As Workbook
+Dim ws As Worksheet
+Dim ws2 As Worksheet
+
+Set wb = ThisWorkbook
+
+Set ws = wb.Sheets("Sheet1")
+Set ws2 = wb.Sheets("Sheet2")
+
+ws.Activate
+    Rows("3:3").Select
+    Selection.Insert Shift:=xlDown, CopyOrigin:=xlFormatFromLeftOrAbove
+ws2.Activate
+    Rows("2:2").Select
+    Selection.Copy
+ws.Activate
+    Rows("3:3").Select
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+    Range("A2").Select
+    Application.CutCopyMode = False
+ws.Activate
+    Rows("2:2").Select
+    Selection.Copy
+ws2.Activate
+    Rows("2:2").Select
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+ws.Activate
+
+Dim opWB As Workbook
+Worksheets(Array("Sheet1", "Charts")).Copy
+
+Set opWB = ActiveWorkbook
+
+opWB.Sheets("Sheet1").Activate
+    Rows("2:2").Select
+    Selection.Copy
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+    :=False, Transpose:=False
+
+opWB.Sheets("Sheet1").Visible = xlSheetHidden
+
+Dim FName As String
+
+FName = Replace(wb.FullName, "Generator - Allianz Huddle Board.xlsm", Format(Now(), "YYYYMMDD") & " - Allianz Trend Board.xlsx")
+
+Application.DisplayAlerts = False
+opWB.SaveAs FName, FileFormat:=51
+opWB.Close
+Application.DisplayAlerts = True
+
+Call Reset.Reset
+
+Application.DisplayAlerts = False
+wb.Save
+Application.DisplayAlerts = False
+
+
+
 
 End Sub
