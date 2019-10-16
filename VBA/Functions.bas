@@ -152,11 +152,11 @@ End Sub
 
 
 
-Sub EmailWorkbook(attachmentPath As String, EmailSubject As String, EmailTo As String, Optional attachmentPath2 As String = "")
+Sub EmailWorkbook(attachmentPath As String, emailSubject As String, emailTo As String, Optional attachmentPath2 As String = "")
 
 Dim OutlookApp As Object
 Dim OutlookMessage As Object
-Dim SourceWB as Workbook
+Dim SourceWB As Workbook
 
 Set SourceWB = ActiveWorkbook
 
@@ -177,12 +177,12 @@ Set SourceWB = ActiveWorkbook
 'Create Outlook email with attachment
   On Error Resume Next
     With OutlookMessage
-     .To = EmailTo
+     .To = emailTo
      .CC = ""
      .BCC = ""
-     .Subject = EmailSubject
+     .Subject = emailSubject
      .Body = ""
-     .Attachments.Add attachmentPath
+     If ImgEmbed(attachmentPath, OutlookMessage) = False Then .Attachments.Add attachmentPath
      If Not attachmentPath2 = "" Then .Attachments.Add attachmentPath2
      .Send
     End With
@@ -190,3 +190,31 @@ Set SourceWB = ActiveWorkbook
  
 
 End Sub
+
+
+Function ImgEmbed(ImgRng As String, mailObj As Object) As Boolean
+    '##### ms word object reference must be added to library #####
+    '#####       the range must be on the active sheet       #####
+    
+    
+If InStr(ImgRng, ":") = 0 Or Not InStr(ImgRng, ":\") = 0 Then
+    ImgEmbed = False
+    Exit Function
+End If
+
+Dim ins As Variant
+
+ActiveSheet.Range(ImgRng).Select
+Selection.CopyPicture xlScreen, xlPicture
+mailObj.Display
+Set ins = mailObj.GetInspector
+Dim doc As Word.Document
+Set doc = ins.WordEditor
+doc.Select
+doc.Application.Selection.Paste
+
+ImgEmbed = True
+     
+
+End Function
+
